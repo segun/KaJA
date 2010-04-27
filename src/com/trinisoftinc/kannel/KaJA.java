@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import sun.tools.javap.JavapPrinter;
 
 /**
  * Class <code>KaJA</code> allows you to administer Kannel without having to know all the intricasies involved
@@ -23,7 +22,7 @@ import sun.tools.javap.JavapPrinter;
 public class KaJA {
 
     /**
-     * The defaul location where kannel is installed
+     * The default location where kannel is installed
      */
     public static final String kannelInstallationDirectory = "/usr/local/kannel";
     /**
@@ -33,10 +32,9 @@ public class KaJA {
     public static final Logger logger = Logger.getLogger(KaJA.class.getName());
     /**
      * Implementers should put this in a loop to test if the bearer box is still running
-     * Check the test
+     * Check the tests for how.
      */
     public static boolean bearerBoxIsRunning = false;
-    private static Process p;
     /**
      * This stores the messages from starting the bearer box
      */
@@ -51,7 +49,7 @@ public class KaJA {
      * @return
      */
     public static void startBearerBox(final String kannelInstallationDirectory, final String configFileLocation) throws IOException {
-        bearerBoxIsRunning = true;
+        bearerBoxIsRunning = true;        
         new Thread() {
 
             @Override
@@ -62,7 +60,7 @@ public class KaJA {
 
                     String command = start_stop_daemon + bearerbox + configFileLocation;
 
-                    p = Runtime.getRuntime().exec(command);
+                    Process p = Runtime.getRuntime().exec(command);
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     String line = "";
@@ -88,7 +86,6 @@ public class KaJA {
                     logger.log(Level.OFF, null, bearerBoxIsRunning);
                 } catch (IOException ex) {
                     bearerBoxIsRunning = false;
-                    ex.printStackTrace();
                     Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -117,7 +114,7 @@ public class KaJA {
 
         String command = start_stop_daemon + bearerbox + configFileLocation;
 
-        p = Runtime.getRuntime().exec(command);
+        Process p = Runtime.getRuntime().exec(command);
         //wait for 30 seconds
         Thread.sleep(30000);
 
@@ -141,45 +138,136 @@ public class KaJA {
      * @param kannelPort this is the admin-port specified in the core group of kannel configuration file
      * @param password this is the password specified in the core group of kannel configuration file. It can either be the main admin password which works for all command or the status password which works for only status commands
      * @param command this is the command to execute on kannel
+     * @param otherParameters any other parameters required to fulfill the request. For example start-smsc require a smsc parameter
      * @return the result of execution of <code>command</code> on kannel. This does no checks. So the implementation must do the checks
      * @throws MalformedURLException
      * @throws IOException
      */
-    private static String callKannel(String format, String kannelHostIp, String kannelPort, String password, String command) throws MalformedURLException, IOException {
+    private static String callKannel(String format, String kannelHostIp, String kannelPort, String password, String command, String otherParameters) throws MalformedURLException, IOException {
         String urlString = "http://" + kannelHostIp + ":" + kannelPort + "/" + command + "." + format + "?password=" + password;
-        System.out.println(urlString);
+        if(otherParameters != null) {
+            urlString += "&" + otherParameters;
+        }
+        logger.log(Level.INFO, urlString);
         URL url = new URL(urlString);
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
         String line = "";
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         while ((line = reader.readLine()) != null) {
-            buffer.append(line + "\n");
+            buffer = buffer.append(line).append("\n");
         }
         return buffer.toString();
     }
 
     /**
-     * This method calls callKannel with command parameter set to <code>status</code><br/>
+     * This method calls callKannel with command parameter set to
+     * <code>status</code><br/>
      * @see com.trinisoftinc.kannel.KaJA.callKannel()
      */
     public static String status(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
-        return callKannel(format, kannelHostIp, kannelPort, password, "status");
+        return callKannel(format, kannelHostIp, kannelPort, password, "status", null);
     }
 
     /**
-     * This method calls callKannel with command parameter set to <code>store-status</code><br />
+     * This method calls callKannel with command parameter set to
+     * <code>store-status</code><br />
      * @see com.trinisoftinc.kannel.KaJA.callKannel()
      */
     public static String storeStatus(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
-        return callKannel(format, kannelHostIp, kannelPort, password, "store-status");
+        return callKannel(format, kannelHostIp, kannelPort, password, "store-status", null);
     }
 
     /**
-     * This method calls callKannel with <code>command<code> parameter set to <code>suspend</code><br/>
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>suspend</code><br/>
      * @see com.trinisoftinc.kannel.KaJA.callKannel()
      */
     public static String suspend(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
-        return callKannel(format, kannelHostIp, kannelPort, password, "suspend");
+        return callKannel(format, kannelHostIp, kannelPort, password, "suspend", null);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>isolate</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String isolate(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "isolate", null);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>resume</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String resume(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "resume", null);
+    }
+    
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>shutdown</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String shutdown(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "shutdown", null);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>flush-dlr</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String flushDLR(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "flush-dlr", null);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>start-smsc</code> and otherParameter <code>smsc=<i>smscname</i></code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String startSMSC(String format, String kannelHostIp, String kannelPort, String password, String smscName) throws MalformedURLException, IOException {
+        String otherParameter = "smsc=" + smscName;
+        return callKannel(format, kannelHostIp, kannelPort, password, "start-smsc", otherParameter);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>stop-smsc</code> and otherParameter <code>smsc=<i>smscname</i></code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String stopSMSC(String format, String kannelHostIp, String kannelPort, String password, String smscName) throws MalformedURLException, IOException {
+        String otherParameter = "smsc=" + smscName;
+        return callKannel(format, kannelHostIp, kannelPort, password, "stop-smsc", otherParameter);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>restart</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String restart(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "restart", null);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>log-level</code> and otherParameter <code>level=<i>new level</i></code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String logLevel(String format, String kannelHostIp, String kannelPort, String password, String newLogLevel) throws MalformedURLException, IOException {
+        String otherParameter = "level=" + newLogLevel;
+        return callKannel(format, kannelHostIp, kannelPort, password, "log-level", otherParameter);
+    }
+
+    /**
+     * This method calls callKannel with <code>command<code> parameter set to
+     * <code>reload-lists</code><br/>
+     * @see com.trinisoftinc.kannel.KaJA.callKannel()
+     */
+    public static String reloadLists(String format, String kannelHostIp, String kannelPort, String password) throws MalformedURLException, IOException {
+        return callKannel(format, kannelHostIp, kannelPort, password, "reload-lists", null);
     }
 }

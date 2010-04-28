@@ -22,6 +22,8 @@ import static org.junit.Assert.*;
 public class KaJATest {
 
     static String url = "192.168.0.100";
+    static String kannelPort = "13000";
+    static String smsboxPort = "13014";
     static final Logger logger = Logger.getLogger(KaJATest.class.getName());
 
     public KaJATest() {
@@ -43,6 +45,20 @@ public class KaJATest {
     public void tearDown() {
     }
 
+    @Test
+    public void testSendSMS() throws MalformedURLException, IOException {
+        logger.log(Level.INFO, "sendSMS");
+        String host = url;
+        String smsboxUsername = "peter";
+        String smsboxPassword = "ford";
+        String to = "08089370313";
+        String text = "hello world, hello birds";
+        String retval = KaJA.sendSMS(host, smsboxPort, smsboxUsername, smsboxPassword, to, text, null);
+        assertNotSame("", retval);
+        logger.log(Level.INFO, retval);
+
+    }
+    
     /**
      * Test of startBearerBox method, of class KaJA.
      */
@@ -59,13 +75,13 @@ public class KaJATest {
         }
         logger.log(Level.INFO, KaJA.outputBufferBearerBox.toString());
     }
-
+    
     @Test
     public void testStatus() throws MalformedURLException, IOException {
         logger.log(Level.INFO, "status");
         String format = "xml";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen_status";
         String retval = KaJA.status(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -77,7 +93,7 @@ public class KaJATest {
         logger.log(Level.INFO, "storeStatus");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen_status";
         String retval = KaJA.storeStatus(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -89,7 +105,7 @@ public class KaJATest {
         logger.log(Level.INFO, "suspend");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.suspend(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -101,7 +117,7 @@ public class KaJATest {
         logger.log(Level.INFO, "isolate");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.isolate(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -113,7 +129,7 @@ public class KaJATest {
         logger.log(Level.INFO, "resume");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.resume(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -125,7 +141,7 @@ public class KaJATest {
         logger.log(Level.INFO, "flushDLR");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.suspend(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -139,7 +155,7 @@ public class KaJATest {
         logger.log(Level.INFO, "startSMSC");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.startSMSC(format, kannelHost, kannelPort, password, "pavel");
         assertNotSame("", retval);
@@ -151,7 +167,7 @@ public class KaJATest {
         logger.log(Level.INFO, "stopSMSC");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.stopSMSC(format, kannelHost, kannelPort, password, "pavel");
         assertNotSame("", retval);
@@ -163,7 +179,7 @@ public class KaJATest {
         logger.log(Level.INFO, "logLevel");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.logLevel(format, kannelHost, kannelPort, password, "0");
         assertNotSame("", retval);
@@ -175,7 +191,7 @@ public class KaJATest {
         logger.log(Level.INFO, "reloadLists");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.reloadLists(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -187,7 +203,7 @@ public class KaJATest {
         logger.log(Level.INFO, "restart");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.restart(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);
@@ -200,7 +216,7 @@ public class KaJATest {
         logger.log(Level.INFO, "shutdown");
         String format = "txt";
         String kannelHost = url;
-        String kannelPort = "13000";
+
         String password = "cyberdeen";
         String retval = KaJA.shutdown(format, kannelHost, kannelPort, password);
         assertNotSame("", retval);

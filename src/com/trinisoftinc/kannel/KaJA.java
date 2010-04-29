@@ -28,24 +28,45 @@ public class KaJA {
      * The default location where kannel is installed
      */
     public static final String kannelInstallationDirectory = "/usr/local/kannel";
+
     /**
-     * The default location of the config file
+     * The default location of the kannel config file
      */
     public static final String configFileLocation = "/etc/kannel.conf";
-    public static final Logger logger = Logger.getLogger(KaJA.class.getName());
+
     /**
-     * Implementers should put this in a loop to test if the bearer box is still running
+     * The default location of the smsbox config file
+     */
+    public static final String smsboxConfigFileLocation = "/etc/kannel.conf";
+    
+    public static final Logger logger = Logger.getLogger(KaJA.class.getName());
+
+    /**
+     * Implementers should put this in a threaded loop to test if the bearer box is still running
      * Check the tests for how.
      */
     public static boolean bearerBoxIsRunning = false;
+
+    /**
+     * Implementers should put this in a threaded loop to test if the smsbox is still running
+     * Check the tests for how.
+     */
+    public static boolean smsboxIsRunning = false;
+
     /**
      * This stores the messages from starting the bearer box
      */
-    public static StringBuffer outputBufferBearerBox = new StringBuffer();
+    public static StringBuilder outputBufferBearerBox = new StringBuilder();
+
+    /**
+     * This stores the messages from starting the smsbox
+     */
+    public static StringBuilder outputBufferSMSBox = new StringBuilder();
 
     /**
      * This method is used to start the bearer box. There are three versions since java doesn't support default
-     * parameters in methods
+     * parameters in methods. Implementors should wait a moment before testing if the bearerbox is running using
+     * the bearerBoxIsRunning variable because of network latency. A reasonable time would be 30 seconds.
      * @param kannelInstallationDirectory the directory where kannel is installed. The default is
      * /usr/local/kannel
      * @param configFileLocation the location of the config file. The default is /etc/kannel.conf
@@ -105,18 +126,17 @@ public class KaJA {
     }
 
     /**
-     * This method is used to start the beare box. There are three versions since java doesn't support default
+     * This method is used to stop the bearer box. There are two versions since java doesn't support default
      * parameters in methods
      * @param kannelInstallationDirectory the directory where kannel is installed. The default is
-     * /usr/local/kannel
-     * @param configFileLocation the location of the config file. The default is /etc/kannel.conf
+     * /usr/local/kannel 
      * @return true if the stop command is successful
      */
-    public static boolean stopBearerBox(final String kannelInstallationDirectory, final String configFileLocation) throws IOException, InterruptedException {
-        String start_stop_daemon = kannelInstallationDirectory + File.separator + "sbin" + File.separator + "start-stop-daemon --start --exec ";
-        String bearerbox = kannelInstallationDirectory + File.separator + "sbin" + File.separator + "bearerbox -- ";
+    public static boolean stopBearerBox(final String kannelInstallationDirectory) throws IOException, InterruptedException {
+        String start_stop_daemon = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "start-stop-daemon --stop --exec ");
+        String bearerbox = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "bearerbox");
 
-        String command = concat(start_stop_daemon, bearerbox, configFileLocation);
+        String command = concat(start_stop_daemon, bearerbox);
 
         Process p = Runtime.getRuntime().exec(command);
         //wait for 30 seconds
@@ -127,14 +147,98 @@ public class KaJA {
         return true;
     }
 
-    public static boolean stopBearerBox(String configFileLocation) throws IOException, InterruptedException {
-        return stopBearerBox(kannelInstallationDirectory, configFileLocation);
-    }
-
     public static boolean stopBearerBox() throws IOException, InterruptedException {
-        return stopBearerBox(kannelInstallationDirectory, configFileLocation);
+        return stopBearerBox(kannelInstallationDirectory);
     }
 
+    /**
+     * This method is used to start the smsbox. There are three versions since java doesn't support default
+     * parameters in methods. Implementors should wait a moment before testing if the smsbox is running using
+     * the smsboxIsRunning variable because of network latency. A reasonable time would be 30 seconds.
+     * @param kannelInstallationDirectory the directory where kannel is installed. The default is
+     * /usr/local/kannel
+     * @param smsboxConfigFileLocation the location of the config file. The default is /etc/kannel.conf
+     */
+    public static void startSMSBox(final String kannelInstallationDirectory, final String smsboxConfigFileLocation) {
+        smsboxIsRunning = true;
+        new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    String start_stop_daemon = concat(kannelInstallationDirectory, File.separator,
+                            "sbin", File.separator, "start-stop-daemon --start --exec ");
+                    String smsbox = concat(kannelInstallationDirectory, File.separator, "sbin",
+                            File.separator, "smsbox -- ");
+
+                    String command = concat(start_stop_daemon, smsbox, smsboxConfigFileLocation);
+
+                    Process p = Runtime.getRuntime().exec(command);
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String line = "";
+                    logger.log(Level.OFF, "----Starting INPUT STREAM LOG------");
+                    while ((line = reader.readLine()) != null) {
+                        outputBufferSMSBox.append(line);
+                        logger.log(Level.INFO, line);
+                    }
+                    logger.log(Level.OFF, "----Ending INPUT STREAM LOG------");
+                    //if we get here, it is either that the smsbox has stopped running
+                    //or that there is an error starting it
+
+                    reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                    line = "";
+                    logger.log(Level.OFF, "----Starting Error STREAM LOG------");
+                    while ((line = reader.readLine()) != null) {
+                        outputBufferSMSBox.append(line);
+                        logger.log(Level.SEVERE, line);
+                    }
+                    logger.log(Level.OFF, "----Stopping Error STREAM LOG------");
+                    p.destroy();
+                    smsboxIsRunning = false;
+                    logger.log(Level.OFF, null, smsboxIsRunning);
+                } catch (IOException ex) {
+                    smsboxIsRunning = false;
+                    Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
+    }
+
+    public static void startSMSBox(String configFileLocation) throws IOException {
+        startSMSBox(kannelInstallationDirectory, configFileLocation);
+    }
+
+    public static void startSMSBox() throws IOException {
+        startSMSBox(kannelInstallationDirectory, configFileLocation);
+    }
+
+    /**
+     * This method is used to stop the smsbox. There are two versions since java doesn't support default
+     * parameters in methods
+     * @param kannelInstallationDirectory the directory where kannel is installed. The default is
+     * /usr/local/kannel
+     * @return true if the stop command is successful
+     */
+    public static boolean stopSMSBox(final String kannelInstallationDirectory) throws IOException, InterruptedException {
+        String start_stop_daemon = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "start-stop-daemon --stop --exec ");
+        String smsbox = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "smsbox");
+
+        String command = concat(start_stop_daemon, smsbox);
+
+        Process p = Runtime.getRuntime().exec(command);
+        //wait for 30 seconds
+        Thread.sleep(30000);
+
+        smsboxIsRunning = false;
+
+        return true;
+    }
+
+    public static boolean stopSMSBox() throws IOException, InterruptedException {
+        return stopSMSBox(kannelInstallationDirectory);
+    }
+    
     /**
      * Calls a url
      *

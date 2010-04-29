@@ -21,11 +21,15 @@ import static org.junit.Assert.*;
  */
 public class KaJATest {
 
-    static String url = "192.168.0.100";
+    static String url = "localhost";
     static String kannelPort = "13000";
     static String smsboxPort = "13014";
     static final Logger logger = Logger.getLogger(KaJATest.class.getName());
 
+    /**
+     * Some tests may fail the first time. Just run them again. By then all services that are not started
+     * must have been started.
+     */
     public KaJATest() {
     }
 
@@ -46,6 +50,31 @@ public class KaJATest {
     }
 
     @Test
+    public void testStartBearerBox_String_String() throws Exception {
+        logger.log(Level.INFO, "startBearerBox");
+        String configFileLocation = "";
+        KaJA.startBearerBox();
+        Thread.sleep(5000);
+        //enable this line to test the stop functionality. All other tests should fail
+        //KaJA.stopBearerBox();
+        logger.log(Level.INFO, "running");
+        logger.log(Level.INFO, KaJA.outputBufferBearerBox.toString());
+        assertTrue(KaJA.bearerBoxIsRunning);
+    }
+
+    @Test
+    public void testStartSMSBox_String_String() throws Exception {
+        logger.log(Level.INFO, "startSMSBox");
+        KaJA.startSMSBox();
+        Thread.sleep(5000);
+        //enable this line to test the stop functionality. All other tests should fail
+        //KaJA.stopSMSBox();
+        logger.log(Level.INFO, "running");
+        logger.log(Level.INFO, KaJA.outputBufferBearerBox.toString());
+        assertTrue(KaJA.smsboxIsRunning);
+    }
+
+    @Test
     public void testSendSMS() throws MalformedURLException, IOException {
         logger.log(Level.INFO, "sendSMS");
         String host = url;
@@ -58,24 +87,7 @@ public class KaJATest {
         logger.log(Level.INFO, retval);
 
     }
-    
-    /**
-     * Test of startBearerBox method, of class KaJA.
-     */
-    //@Test
-    public void testStartBearerBox_String_String() throws Exception {
-        logger.log(Level.INFO, "startBearerBox");
-        String kannelInstallationDirectory = "/Users/trinisoftinc/bin";
-        String configFileLocation = "";
-        KaJA.startBearerBox(kannelInstallationDirectory, configFileLocation);
-        while (KaJA.bearerBoxIsRunning) {
-            logger.log(Level.INFO, "running");
-            Thread.sleep(30000);
-            KaJA.stopBearerBox();
-        }
-        logger.log(Level.INFO, KaJA.outputBufferBearerBox.toString());
-    }
-    
+
     @Test
     public void testStatus() throws MalformedURLException, IOException {
         logger.log(Level.INFO, "status");

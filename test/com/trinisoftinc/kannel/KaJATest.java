@@ -70,8 +70,20 @@ public class KaJATest {
         //enable this line to test the stop functionality. All other tests should fail
         //KaJA.stopSMSBox();
         logger.log(Level.INFO, "running");
-        logger.log(Level.INFO, KaJA.outputBufferBearerBox.toString());
+        logger.log(Level.INFO, KaJA.outputBufferSMSBox.toString());
         assertTrue(KaJA.smsboxIsRunning);
+    }
+
+    @Test
+    public void testStartWAPBox_String_String() throws Exception {
+        logger.log(Level.INFO, "startWAPBox");
+        KaJA.startWAPBox();
+        Thread.sleep(5000);
+        //enable this line to test the stop functionality. All other tests should fail
+        //KaJA.stopSMSBox();
+        logger.log(Level.INFO, "running");
+        logger.log(Level.INFO, KaJA.outputBufferWAPBox.toString());
+        assertTrue(KaJA.wapboxIsRunning);
     }
 
     @Test

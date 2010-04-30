@@ -38,6 +38,11 @@ public class KaJA {
      * The default location of the smsbox config file
      */
     public static final String smsboxConfigFileLocation = "/etc/kannel.conf";
+
+    /**
+     * The default location of the wapbox config file
+     */
+    public static final String wapboxConfigFileLocation = "/etc/kannel.conf";
     
     public static final Logger logger = Logger.getLogger(KaJA.class.getName());
 
@@ -54,6 +59,12 @@ public class KaJA {
     public static boolean smsboxIsRunning = false;
 
     /**
+     * Implementers should put this in a threaded loop to test if the wapbox is still running
+     * Check the tests for how.
+     */
+    public static boolean wapboxIsRunning = false;
+
+    /**
      * This stores the messages from starting the bearer box
      */
     public static StringBuilder outputBufferBearerBox = new StringBuilder();
@@ -62,6 +73,11 @@ public class KaJA {
      * This stores the messages from starting the smsbox
      */
     public static StringBuilder outputBufferSMSBox = new StringBuilder();
+
+    /**
+     * This stores the messages from starting the wapbox
+     */
+    public static StringBuilder outputBufferWAPBox = new StringBuilder();
 
     /**
      * This method is used to start the bearer box. There are three versions since java doesn't support default
@@ -237,6 +253,95 @@ public class KaJA {
 
     public static boolean stopSMSBox() throws IOException, InterruptedException {
         return stopSMSBox(kannelInstallationDirectory);
+    }
+    
+
+    /**
+     * This method is used to start the wapbox. There are three versions since java doesn't support default
+     * parameters in methods. Implementors should wait a moment before testing if the wapbox is running using
+     * the wapboxIsRunning variable because of network latency. A reasonable time would be 30 seconds.
+     * @param kannelInstallationDirectory the directory where kannel is installed. The default is
+     * /usr/local/kannel
+     * @param wapboxConfigFileLocation the location of the config file. The default is /etc/kannel.conf
+     */
+    public static void startWAPBox(final String kannelInstallationDirectory, final String wapboxConfigFileLocation) {
+        wapboxIsRunning = true;
+        new Thread() {
+
+            @Override
+            public void run() {
+                try {
+                    String start_stop_daemon = concat(kannelInstallationDirectory, File.separator,
+                            "sbin", File.separator, "start-stop-daemon --start --exec ");
+                    String wapbox = concat(kannelInstallationDirectory, File.separator, "sbin",
+                            File.separator, "wapbox -- ");
+
+                    String command = concat(start_stop_daemon, wapbox, wapboxConfigFileLocation);
+
+                    Process p = Runtime.getRuntime().exec(command);
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    String line = "";
+                    logger.log(Level.OFF, "----Starting INPUT STREAM LOG------");
+                    while ((line = reader.readLine()) != null) {
+                        outputBufferWAPBox.append(line);
+                        logger.log(Level.INFO, line);
+                    }
+                    logger.log(Level.OFF, "----Ending INPUT STREAM LOG------");
+                    //if we get here, it is either that the wapbox has stopped running
+                    //or that there is an error starting it
+
+                    reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                    line = "";
+                    logger.log(Level.OFF, "----Starting Error STREAM LOG------");
+                    while ((line = reader.readLine()) != null) {
+                        outputBufferWAPBox.append(line);
+                        logger.log(Level.SEVERE, line);
+                    }
+                    logger.log(Level.OFF, "----Stopping Error STREAM LOG------");
+                    p.destroy();
+                    wapboxIsRunning = false;
+                    logger.log(Level.OFF, null, wapboxIsRunning);
+                } catch (IOException ex) {
+                    wapboxIsRunning = false;
+                    Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }.start();
+    }
+
+    public static void startWAPBox(String configFileLocation) throws IOException {
+        startWAPBox(kannelInstallationDirectory, configFileLocation);
+    }
+
+    public static void startWAPBox() throws IOException {
+        startWAPBox(kannelInstallationDirectory, configFileLocation);
+    }
+
+    /**
+     * This method is used to stop the wapbox. There are two versions since java doesn't support default
+     * parameters in methods
+     * @param kannelInstallationDirectory the directory where kannel is installed. The default is
+     * /usr/local/kannel
+     * @return true if the stop command is successful
+     */
+    public static boolean stopWAPBox(final String kannelInstallationDirectory) throws IOException, InterruptedException {
+        String start_stop_daemon = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "start-stop-daemon --stop --exec ");
+        String wapbox = concat(kannelInstallationDirectory, File.separator, "sbin", File.separator, "wapbox");
+
+        String command = concat(start_stop_daemon, wapbox);
+
+        Process p = Runtime.getRuntime().exec(command);
+        //wait for 30 seconds
+        Thread.sleep(30000);
+
+        wapboxIsRunning = false;
+
+        return true;
+    }
+
+    public static boolean stopWAPBox() throws IOException, InterruptedException {
+        return stopWAPBox(kannelInstallationDirectory);
     }
     
     /**

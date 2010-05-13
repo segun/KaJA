@@ -51,18 +51,30 @@ public class KaJA {
      * Check the tests for how.
      */
     public static boolean bearerBoxIsRunning = false;
+    /**
+     * This variable is ONLY true if there's an error during start of bearer box
+     */
+    public static boolean bearerBoxError = false;
 
     /**
      * Implementers should put this in a threaded loop to test if the smsbox is still running
      * Check the tests for how.
      */
     public static boolean smsboxIsRunning = false;
+    /**
+     * This variable is ONLY true if there's an error during start of sms box
+     */
+    public static boolean smsBoxError = true;
 
     /**
      * Implementers should put this in a threaded loop to test if the wapbox is still running
      * Check the tests for how.
      */
     public static boolean wapboxIsRunning = false;
+    /**
+     * This variable is ONLY true if there's an error during start of wap box
+     */
+    public static boolean wapBoxError = true;
 
     /**
      * This stores the messages from starting the bearer box
@@ -87,8 +99,8 @@ public class KaJA {
      * /usr/local/kannel
      * @param configFileLocation the location of the config file. The default is /etc/kannel.conf
      */
-    public static void startBearerBox(final String kannelInstallationDirectory, final String configFileLocation) throws IOException {
-        bearerBoxIsRunning = true;        
+    public static void startBearerBox(final String kannelInstallationDirectory, final String configFileLocation) {
+        bearerBoxIsRunning = true;  
         new Thread() {
 
             @Override
@@ -124,20 +136,22 @@ public class KaJA {
                     logger.log(Level.OFF, "----Stopping Error STREAM LOG------");
                     p.destroy();
                     bearerBoxIsRunning = false;
+                    bearerBoxError = true;
                     logger.log(Level.OFF, null, bearerBoxIsRunning);
                 } catch (IOException ex) {
                     bearerBoxIsRunning = false;
+                    bearerBoxError = true;
                     Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
     }
 
-    public static void startBearerBox(String configFileLocation) throws IOException {
+    public static void startBearerBox(String configFileLocation) {
         startBearerBox(kannelInstallationDirectory, configFileLocation);
     }
 
-    public static void startBearerBox() throws IOException {
+    public static void startBearerBox() {
         startBearerBox(kannelInstallationDirectory, configFileLocation);
     }
 
@@ -212,20 +226,22 @@ public class KaJA {
                     logger.log(Level.OFF, "----Stopping Error STREAM LOG------");
                     p.destroy();
                     smsboxIsRunning = false;
+                    smsBoxError = true;
                     logger.log(Level.OFF, null, smsboxIsRunning);
                 } catch (IOException ex) {
                     smsboxIsRunning = false;
+                    smsBoxError = true;
                     Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
     }
 
-    public static void startSMSBox(String configFileLocation) throws IOException {
+    public static void startSMSBox(String configFileLocation) {
         startSMSBox(kannelInstallationDirectory, configFileLocation);
     }
 
-    public static void startSMSBox() throws IOException {
+    public static void startSMSBox() {
         startSMSBox(kannelInstallationDirectory, configFileLocation);
     }
 
@@ -301,20 +317,22 @@ public class KaJA {
                     logger.log(Level.OFF, "----Stopping Error STREAM LOG------");
                     p.destroy();
                     wapboxIsRunning = false;
+                    wapBoxError = true;
                     logger.log(Level.OFF, null, wapboxIsRunning);
                 } catch (IOException ex) {
                     wapboxIsRunning = false;
+                    wapBoxError = true;
                     Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }.start();
     }
 
-    public static void startWAPBox(String configFileLocation) throws IOException {
+    public static void startWAPBox(String configFileLocation) {
         startWAPBox(kannelInstallationDirectory, configFileLocation);
     }
 
-    public static void startWAPBox() throws IOException {
+    public static void startWAPBox() {
         startWAPBox(kannelInstallationDirectory, configFileLocation);
     }
 

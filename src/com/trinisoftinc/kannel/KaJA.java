@@ -4,6 +4,7 @@
  */
 package com.trinisoftinc.kannel;
 
+import com.trinisoft.libraries.PropertyHelper;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -92,6 +94,24 @@ public class KaJA {
     public static StringBuilder outputBufferWAPBox = new StringBuilder();
 
     /**
+     * Log files are where we pull log information from.
+     */
+    public static String kannelLogFile = "/var/log/kannel/kannel.log";
+    public static String smsboxLogFile = "/var/log/kannel/smsbox.log";
+    public static String wapboxLogFile = "/var/log/kannel/wapbox.log";
+
+    static {
+        try {
+            PropertyHelper helper = new PropertyHelper();
+            Properties props = helper.getProperties("/etc/KaJA.properties");
+            kannelLogFile = props.getProperty("kannel-log-file");
+            smsboxLogFile = props.getProperty("smsbox-log-file");
+            wapboxLogFile = props.getProperty("wapbox-log-file");
+        } catch (IOException ex) {
+            Logger.getLogger(KaJA.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    /**
      * This method is used to start the bearer box. There are three versions since java doesn't support default
      * parameters in methods. Implementors should wait a moment before testing if the bearerbox is running using
      * the bearerBoxIsRunning variable because of network latency. A reasonable time would be 30 seconds.
@@ -113,6 +133,9 @@ public class KaJA {
 
                     String command = concat(start_stop_daemon, bearerbox, configFileLocation);
 
+                    Runtime.getRuntime().exec(command);
+                    
+                    command = concat("tail -f ", kannelLogFile);
                     Process p = Runtime.getRuntime().exec(command);
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -203,6 +226,9 @@ public class KaJA {
 
                     String command = concat(start_stop_daemon, smsbox, smsboxConfigFileLocation);
 
+                    Runtime.getRuntime().exec(command);
+
+                    command = concat("tail -f ", smsboxLogFile);
                     Process p = Runtime.getRuntime().exec(command);
 
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -294,8 +320,11 @@ public class KaJA {
 
                     String command = concat(start_stop_daemon, wapbox, wapboxConfigFileLocation);
 
-                    Process p = Runtime.getRuntime().exec(command);
+                    Runtime.getRuntime().exec(command);
 
+                    command = concat("tail -f ", wapboxLogFile);
+                    Process p = Runtime.getRuntime().exec(concat("tail -f ", wapboxLogFile));
+                    
                     BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
                     String line = "";
                     logger.log(Level.OFF, "----Starting INPUT STREAM LOG------");

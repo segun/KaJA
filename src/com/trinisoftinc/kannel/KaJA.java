@@ -575,7 +575,7 @@ public class KaJA {
             Set<String> keys = otherOptions.keySet();
             for(String k: keys) {
                 String v = otherOptions.get(k);
-                params = concat("&", k, "=", URLEncoder.encode(v, "UTF-8"));
+                params += concat("&", k, "=", URLEncoder.encode(v, "UTF-8"));
             }
         }
         sendStatus = callURL(concat(url, params));
